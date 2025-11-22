@@ -2,7 +2,7 @@ import React, { useContext } from "react";
 import { CartContext } from "../Context/CartContext";
 
 function Cart() {
-  const { cartItems, removeFromCart, updateQuantity, placeOrder } = useContext(CartContext);
+  const { cartItems, removeFromCart, updateQuantity, submitOrder } = useContext(CartContext);
 // Calculate total price dynamically
   const cartTotal = cartItems.reduce((acc, item) => acc + item.price * item.quantity, 0);
 
@@ -55,7 +55,7 @@ function Cart() {
       {cartItems.length > 0 && (
         <div className="text-end">
           <h4>Total: ${cartTotal.toFixed(2)}</h4>
-          <button className="btn btn-success" onClick={placeOrder}>Place Order</button>
+          <button className="btn btn-success" onClick={submitOrder}>Place Order</button>
         </div>
       )}
     </div>
