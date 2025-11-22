@@ -5,8 +5,8 @@ function Contact() {
 
   const handleChange = (e) =>
     setFormData({ ...formData, [e.target.name]: e.target.value });
-
-  const handleSubmit = (e) => {
+// Form submission resets fields
+  const submitForm = (e) => {
     e.preventDefault();
     alert("Message sent!");
     setFormData({ name: "", email: "", message: "" });
@@ -16,7 +16,7 @@ function Contact() {
     <div className="container py-5" style={{ maxWidth: "600px" }}>
       <h2 className="text-center text-danger">Contact Us</h2>
 
-      <form className="mt-4" onSubmit={handleSubmit}>
+      <form className="mt-4" onSubmit={submitForm}>
         <div className="mb-3">
           <label className="form-label">Name</label>
           <input 
@@ -52,7 +52,7 @@ function Contact() {
           ></textarea>
         </div>
 
-        <button className="btn btn-danger w-100">Send Message</button>
+        <button className="btn btn-danger w-100">Send Your Message</button>
       </form>
     </div>
   );
