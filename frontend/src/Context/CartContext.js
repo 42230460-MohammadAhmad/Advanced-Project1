@@ -1,5 +1,6 @@
 import React, { createContext, useState } from "react";
-
+//Add items to cart or increase quantity 
+//remove items from cart
 export const CartContext = createContext();
 
 export function CartProvider({ children }) {
@@ -29,7 +30,7 @@ export function CartProvider({ children }) {
     );
   };
 
-  const placeOrder = () => {
+  const submitOrder = () => {
     if (cartItems.length === 0) return;
     const newOrder = {
       id: Date.now(),
@@ -57,7 +58,7 @@ export function CartProvider({ children }) {
       addToCart,
       removeFromCart,
       updateQuantity,
-      placeOrder,
+      submitOrder,
       orders,
       updateOrderStatus,
       deleteOrder // included here
