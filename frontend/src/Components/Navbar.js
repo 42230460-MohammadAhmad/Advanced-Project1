@@ -2,12 +2,12 @@
 import React, { useContext } from "react";
 import { Link } from "react-router-dom";
 import { AuthContext } from "../Context/AuthContext";
-
+//Navbar links
 function Navbar() {
   const { currentUser, logout } = useContext(AuthContext);
 
   return (
-    <nav className="navbar navbar-expand-lg navbar-dark bg-dark px-3">
+    <nav className="navbar navbar-expand-lg navbar-dark bg-secondary px-3">
       <Link to="/" className="navbar-brand">My Restaurant</Link>
       
       <button 
@@ -19,13 +19,14 @@ function Navbar() {
         aria-expanded="false" 
         aria-label="Toggle navigation"
       >
+        
         <span className="navbar-toggler-icon"></span>
       </button>
 
       <div className="collapse navbar-collapse" id="navbarNav">
         <ul className="navbar-nav me-auto mb-2 mb-lg-0">
           <li className="nav-item"><Link to="/" className="nav-link">Home</Link></li>
-          <li className="nav-item"><Link to="/menu" className="nav-link">Menu</Link></li>
+          <li className="nav-item"><Link to="/menu" className="nav-link">Our Menu</Link></li>
           
           {currentUser?.role === "customer" && (
             <>
