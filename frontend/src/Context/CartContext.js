@@ -1,55 +1,71 @@
-import React, { createContext, useState } from "react";
-//Add items to cart or increase quantity 
-//remove items from cart
+import React, { createContext, useState, useContext } from "react";
+import { AuthContext } from "./AuthContext";
+
 export const CartContext = createContext();
 
 export function CartProvider({ children }) {
+  const { currentUser } = useContext(AuthContext);
+
   const [cartItems, setCartItems] = useState([]);
   const [orders, setOrders] = useState([]);
 
+  //ADD TO CART
   const addToCart = (dish) => {
     const exists = cartItems.find(item => item.id === dish.id);
-    if (exists) {
+    if (exists) { //if item already added to cart before, increment quantity +1
       setCartItems(
         cartItems.map(item =>
           item.id === dish.id ? { ...item, quantity: item.quantity + 1 } : item
         )
       );
-    } else {
+    } else { 
       setCartItems([...cartItems, { ...dish, quantity: 1 }]);
     }
   };
-
+//REMOVE FROM CART
   const removeFromCart = (id) => {
     setCartItems(cartItems.filter(item => item.id !== id));
   };
-
+//UPDATE QUANTITY
   const updateQuantity = (id, qty) => {
     setCartItems(
       cartItems.map(item => (item.id === id ? { ...item, quantity: qty } : item))
     );
   };
 
-  const submitOrder = () => {
-    if (cartItems.length === 0) return;
-    const newOrder = {
-      id: Date.now(),
-      items: cartItems,
-      status: "Pending",
-    };
-    setOrders([...orders, newOrder]);
-    setCartItems([]); // Clear cart after placing order
+  //SUBMIT ORDER USING BACKEND
+  const submitOrder = async () => {
+    if (!currentUser || cartItems.length === 0) return;
+
+    await fetch("http://localhost:5000/orders", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        user_id: currentUser.id,
+        items: cartItems,
+        total: cartItems.reduce(
+          (sum, i) => sum + i.price * i.quantity,
+          0
+        ),
+      }),
+    });
+
+    setCartItems([]);
   };
 
-  const updateOrderStatus = (id, status) => {
-    setOrders(
-      orders.map(order => (order.id === id ? { ...order, status } : order))
-    );
+  // UPDATE ORDER STATUS USING BACKEND
+  const updateOrderStatus = async (id, status) => {
+    await fetch(`http://localhost:5000/orders/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status }),
+    });
   };
-
-  // New function to delete an order completely
-  const deleteOrder = (id) => {
-    setOrders(orders.filter(order => order.id !== id));
+//DELETE ORDER USING BACKEND
+  const deleteOrder = async (id) => {
+    await fetch(`http://localhost:5000/orders/${id}`, {
+      method: "DELETE",
+    });
   };
 
   return (
@@ -61,7 +77,7 @@ export function CartProvider({ children }) {
       submitOrder,
       orders,
       updateOrderStatus,
-      deleteOrder // included here
+      deleteOrder,
     }}>
       {children}
     </CartContext.Provider>

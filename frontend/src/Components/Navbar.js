@@ -6,7 +6,7 @@ import { AuthContext } from "../Context/AuthContext";
 function Navbar() {
   const { currentUser, logout } = useContext(AuthContext);
 
-  return (
+  return ( // I used here a bootstrap for responsiveness
     <nav className="navbar navbar-expand-lg navbar-dark bg-secondary px-3">
       <Link to="/" className="navbar-brand">My Restaurant</Link>
       

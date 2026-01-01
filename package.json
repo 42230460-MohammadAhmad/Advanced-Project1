@@ -2,5 +2,24 @@
   "dependencies": {
     "bootstrap": "^5.3.8",
     "react-router-dom": "^6.30.2"
-  }
+  },
+  "name": "advanced-project1",
+  "version": "1.0.0",
+  "description": "A simple restaurant web application where users can browse the menu, add items to the cart, place orders, and track them. Admins can manage kitchen orders.",
+  "main": "index.js",
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/42230460-MohammadAhmad/Advanced-Project1.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/42230460-MohammadAhmad/Advanced-Project1/issues"
+  },
+  "homepage": "https://github.com/42230460-MohammadAhmad/Advanced-Project1#readme"
 }

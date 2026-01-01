@@ -5,7 +5,7 @@ function Contact() {
 
   const handleChange = (e) =>
     setFormData({ ...formData, [e.target.name]: e.target.value });
-// Form submission resets fields
+
   const submitForm = (e) => {
     e.preventDefault();
     alert("Message sent!");

@@ -1,8 +1,36 @@
-import React, { useContext } from "react";
-import { CartContext } from "../Context/CartContext";
+import React, { useEffect, useState } from "react";
 
 function Kitchen() {
-  const { orders, updateOrderStatus, deleteOrder } = useContext(CartContext);
+  const [orders, setOrders] = useState([]);
+
+  useEffect(() => {
+    fetch("http://localhost:5000/orders")
+      .then(res => res.json())
+      .then(data => setOrders(data));
+  }, []);
+
+  const updateOrderStatus = async (id, status) => {
+    await fetch(`http://localhost:5000/orders/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status }),
+    });
+
+    // refresh orders
+    setOrders(
+      orders.map(order =>
+        order.id === id ? { ...order, status } : order
+      )
+    );
+  };
+
+  const deleteOrder = async (id) => {
+    await fetch(`http://localhost:5000/orders/${id}`, {
+      method: "DELETE",
+    });
+
+    setOrders(orders.filter(order => order.id !== id));
+  };
 
   return (
     <div className="container py-4">
@@ -12,34 +40,36 @@ function Kitchen() {
         <p className="text-center mt-3">No orders yet.</p>
       ) : (
         <div className="row g-3 mt-3">
-          {orders.map((order) => (
+          {orders.map(order => (
             <div className="col-12" key={order.id}>
               <div className="card p-3 shadow-sm">
                 <h5>Order ID: {order.id}</h5>
                 <p>Status: <strong>{order.status}</strong></p>
 
                 <ul>
-                  {order.items.map((i) => (
-                    <li key={i.id}>{i.name} × {i.quantity}</li>
+                  {order.items.map((i, idx) => (
+                    <li key={idx}>
+                      {i.item_name} × {i.quantity}
+                    </li>
                   ))}
                 </ul>
 
                 <div className="mt-3 d-flex gap-2">
-                  <button 
+                  <button
                     className="btn btn-success"
                     onClick={() => updateOrderStatus(order.id, "In Progress")}
                   >
                     In Progress
                   </button>
 
-                  <button 
+                  <button
                     className="btn btn-primary"
                     onClick={() => updateOrderStatus(order.id, "Completed")}
                   >
                     Completed
                   </button>
 
-                  <button 
+                  <button
                     className="btn btn-danger"
                     onClick={() => deleteOrder(order.id)}
                   >

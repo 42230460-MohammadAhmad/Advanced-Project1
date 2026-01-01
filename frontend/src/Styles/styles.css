@@ -1,0 +1,150 @@
+/* App.css */
+
+/* --- Navbar --- */
+.navbar {
+  padding: 0.5rem 1rem;
+}
+.navbar-brand {
+  font-weight: bold;
+  font-size: 1.5rem;
+}
+.nav-link {
+  margin-right: 1rem;
+}
+.btn-outline-light {
+  border: 1px solid #fff;
+  color: #fff;
+}
+.btn-outline-light:hover {
+  background-color: #fff;
+  color: #000;
+}
+
+/* --- Footer --- */
+footer {
+  background-color: #212529;
+  color: #fff;
+  padding: 1rem 0;
+  text-align: center;
+  margin-top: auto;
+}
+footer p {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+/* --- Home --- */
+.container h1.text-danger {
+  margin-bottom: 1rem;
+}
+.lead {
+  margin-bottom: 2rem;
+}
+img.img-fluid.rounded {
+  height: 280px;
+  width: 100%;
+  object-fit: cover;
+}
+button.btn-danger {
+  opacity: 0.8;
+}
+button.btn-danger:hover {
+  opacity: 1;
+}
+.btn-danger.mt-4 {
+  margin-top: 1.5rem;
+}
+
+/* --- About --- */
+.text-center.text-danger {
+  margin-bottom: 1rem;
+}
+.card.shadow-sm.h-100.text-center.p-3 {
+  transition: transform 0.2s;
+}
+.card.shadow-sm.h-100.text-center.p-3:hover {
+  transform: translateY(-5px);
+}
+.rounded-circle.img-fluid {
+  width: 130px;
+  height: 130px;
+  object-fit: cover;
+}
+
+/* --- Menu --- */
+.card.h-100.shadow-sm.text-center img.card-img-top {
+  height: 150px;
+  object-fit: cover;
+}
+.card-body h5 {
+  margin-top: 0.5rem;
+  font-weight: bold;
+}
+.card-body p {
+  margin-bottom: 0.5rem;
+}
+.btn.btn-danger {
+  width: 100%;
+}
+
+/* --- Cart --- */
+.table-responsive {
+  margin-top: 1rem;
+}
+input.form-control {
+  width: 70px;
+}
+button.btn-danger.btn-sm {
+  font-size: 0.8rem;
+}
+.text-end h4 {
+  margin-top: 1rem;
+}
+
+/* --- Contact --- */
+form .form-label {
+  font-weight: 500;
+}
+form .form-control {
+  margin-bottom: 1rem;
+}
+.btn.btn-danger.w-100 {
+  margin-top: 1rem;
+}
+
+/* --- Kitchen --- */
+.card.p-3.shadow-sm {
+  margin-bottom: 1rem;
+}
+.card p strong {
+  color: #dc3545;
+}
+button.btn {
+  min-width: 100px;
+}
+
+/* --- Order Tracking --- */
+.card.p-3.shadow-sm {
+  margin-bottom: 1rem;
+}
+.card h5 {
+  font-weight: bold;
+}
+.card ul li {
+  margin-left: 1rem;
+}
+
+/* --- Login --- */
+.container {
+  padding-top: 3rem;
+}
+.alert.alert-danger {
+  margin-bottom: 1rem;
+}
+.btn.btn-danger.w-100 {
+  margin-top: 1rem;
+}
+p.text-muted {
+  font-size: 0.85rem;
+  margin-top: 1rem;
+}

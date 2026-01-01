@@ -1,8 +1,13 @@
-import React, { useContext } from "react";
-import { CartContext } from "../Context/CartContext";
+import React, { useEffect, useState } from "react";
 
 function OrderTracking() {
-  const { orders } = useContext(CartContext);
+  const [orders, setOrders] = useState([]);
+
+  useEffect(() => {
+    fetch("http://localhost:5000/orders")
+      .then(res => res.json())
+      .then(data => setOrders(data));
+  }, []);
 
   return (
     <div className="container py-4">
@@ -18,8 +23,8 @@ function OrderTracking() {
                 <h5>Order ID: {order.id}</h5>
                 <p>Status: <strong>{order.status}</strong></p>
                 <ul>
-                  {order.items.map((i) => (
-                    <li key={i.id}>{i.name} × {i.quantity}</li>
+                  {order.items.map((i, idx) => (
+                    <li key={idx}>{i.item_name} × {i.quantity}</li>
                   ))}
                 </ul>
               </div>
