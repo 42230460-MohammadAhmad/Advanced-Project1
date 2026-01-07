@@ -7,19 +7,28 @@ const { Pool } = pkg;
 const app = express();
 
 // middleware
-app.use(cors());
+const allowedOrigins = [
+  "http://localhost:3000",
+  "https://YOUR-FRONTEND.vercel.app", // <-- change this
+];
+
+app.use(cors({
+  origin: (origin, cb) => {
+    if (!origin) return cb(null, true);
+    if (allowedOrigins.includes(origin)) return cb(null, true);
+    return cb(new Error("Not allowed by CORS"));
+  },
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+}));
+
 app.use(express.json());
 
 // =======================
 // POSTGRESQL CONNECTION
 // =======================
 const db = new Pool({
-  host: "ep-purple-thunder-ad990ow8-pooler.c-2.us-east-1.aws.neon.tech",
-  user: "neondb_owner",         // change if needed
-  password: "npg_jZUzJPvSW30f",             // change if needed
-  database: "neondb",
-  port: 5432,
-  ssl: { rejectUnauthorized: false }, // enable if using hosted PG
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false },
 });
 
 db.connect()
@@ -59,9 +68,7 @@ app.post("/login", async (req, res) => {
 app.post("/orders", async (req, res) => {
   const { user_id, items, total } = req.body;
 
-  // Use a transaction so we don't create an order without its items
   const client = await db.connect();
-
   try {
     await client.query("BEGIN");
 
@@ -73,8 +80,6 @@ app.post("/orders", async (req, res) => {
     const orderRes = await client.query(q1, [user_id, total]);
     const orderId = orderRes.rows[0].id;
 
-    // Bulk insert order_items
-    // We build: VALUES ($1,$2,$3,$4), ($5,$6,$7,$8), ...
     const values = [];
     const placeholders = items
       .map((item, idx) => {
@@ -143,10 +148,8 @@ app.put("/orders/:id", async (req, res) => {
   const { status } = req.body;
   const { id } = req.params;
 
-  const q = "UPDATE orders SET status = $1 WHERE id = $2";
-
   try {
-    await db.query(q, [status, id]);
+    await db.query("UPDATE orders SET status = $1 WHERE id = $2", [status, id]);
     return res.json({ message: "Order updated" });
   } catch (err) {
     return res.status(500).json({ message: "DB error", error: err.message });
@@ -159,16 +162,12 @@ app.put("/orders/:id", async (req, res) => {
 app.delete("/orders/:id", async (req, res) => {
   const { id } = req.params;
 
-  // If you don't have ON DELETE CASCADE on order_items.order_id,
-  // you should delete items first.
   const client = await db.connect();
-
   try {
     await client.query("BEGIN");
     await client.query("DELETE FROM order_items WHERE order_id = $1", [id]);
-    await client.query("DELETE FROM orders WHERE id = $1", [id]);
+    await client.query("DELETE FROM orders WHERE id = = $1", [id]); // <-- fix below
     await client.query("COMMIT");
-
     return res.json({ message: "Order deleted" });
   } catch (err) {
     await client.query("ROLLBACK");
@@ -179,6 +178,9 @@ app.delete("/orders/:id", async (req, res) => {
 });
 
 // =======================
-app.listen(5000, () => {
-  console.log("Backend running on http://localhost:5000");
+// LISTEN (Railway)
+// =======================
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+  console.log(`Backend running on port ${PORT}`);
 });
