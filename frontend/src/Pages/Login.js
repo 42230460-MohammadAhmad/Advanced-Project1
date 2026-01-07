@@ -29,7 +29,7 @@ function Login() {
             type="email"
             className="form-control"
             value={email}
-            onChange={e => setEmail(e.target.value)}
+            onChange={e => setEmail(e.target.value)} 
             required 
           />
         </div>
