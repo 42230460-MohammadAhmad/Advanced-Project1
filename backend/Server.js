@@ -19,7 +19,7 @@ const db = new Pool({
   password: "npg_jZUzJPvSW30f",             // change if needed
   database: "neondb",
   port: 5432,
-  // ssl: { rejectUnauthorized: false }, // enable if using hosted PG
+  ssl: { rejectUnauthorized: false }, // enable if using hosted PG
 });
 
 db.connect()
