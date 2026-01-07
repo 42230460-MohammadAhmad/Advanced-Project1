@@ -1,6 +1,8 @@
 import express from "express";
-import mysql from "mysql";
+import pkg from "pg";
 import cors from "cors";
+
+const { Pool } = pkg;
 
 const app = express();
 
@@ -9,62 +11,99 @@ app.use(cors());
 app.use(express.json());
 
 // =======================
-// MYSQL CONNECTION
+// POSTGRESQL CONNECTION
 // =======================
-const db = mysql.createConnection({
+const db = new Pool({
   host: "localhost",
-  user: "root",
-  password: "",
+  user: "postgres",         // change if needed
+  password: "",             // change if needed
   database: "restaurant_db",
+  port: 5432,
+  // ssl: { rejectUnauthorized: false }, // enable if using hosted PG
 });
 
-db.connect((err) => {
-  if (err) {
-    console.error("MySQL connection failed:", err);
-  } else {
-    console.log("Connected to MySQL database");
-  }
-});
+db.connect()
+  .then((client) => {
+    client.release();
+    console.log("Connected to PostgreSQL database");
+  })
+  .catch((err) => {
+    console.error("PostgreSQL connection failed:", err);
+  });
 
 // =======================
 // LOGIN
 // =======================
-app.post("/login", (req, res) => {
+app.post("/login", async (req, res) => {
   const { email, password } = req.body;
-  const q = "SELECT id, email, role FROM users WHERE email = ? AND password = ?";
-  
-  db.query(q, [email, password], (err, data) => {
-    if (err) return res.status(500).json(err);
-    if (data.length === 0) return res.status(401).json({ message: "Invalid credentials" });
-    return res.json(data[0]);
-  });
+
+  const q = `
+    SELECT id, email, role
+    FROM users
+    WHERE email = $1 AND password = $2
+    LIMIT 1
+  `;
+
+  try {
+    const { rows } = await db.query(q, [email, password]);
+    if (rows.length === 0) return res.status(401).json({ message: "Invalid credentials" });
+    return res.json(rows[0]);
+  } catch (err) {
+    return res.status(500).json({ message: "DB error", error: err.message });
+  }
 });
 
 // =======================
 // CREATE ORDER
 // =======================
-app.post("/orders", (req, res) => {
+app.post("/orders", async (req, res) => {
   const { user_id, items, total } = req.body;
 
-  const q1 = "INSERT INTO orders (user_id, total, status) VALUES (?, ?, 'Pending')";
-  db.query(q1, [user_id, total], (err, result) => {
-    if (err) return res.status(500).json(err);
+  // Use a transaction so we don't create an order without its items
+  const client = await db.connect();
 
-    const orderId = result.insertId;
-    const values = items.map(item => [orderId, item.name, item.price, item.quantity]);
-    const q2 = "INSERT INTO order_items (order_id, item_name, price, quantity) VALUES ?";
+  try {
+    await client.query("BEGIN");
 
-    db.query(q2, [values], (err2) => {
-      if (err2) return res.status(500).json(err2);
-      return res.json({ message: "Order created successfully" });
-    });
-  });
+    const q1 = `
+      INSERT INTO orders (user_id, total, status)
+      VALUES ($1, $2, 'Pending')
+      RETURNING id
+    `;
+    const orderRes = await client.query(q1, [user_id, total]);
+    const orderId = orderRes.rows[0].id;
+
+    // Bulk insert order_items
+    // We build: VALUES ($1,$2,$3,$4), ($5,$6,$7,$8), ...
+    const values = [];
+    const placeholders = items
+      .map((item, idx) => {
+        const base = idx * 4;
+        values.push(orderId, item.name, item.price, item.quantity);
+        return `($${base + 1}, $${base + 2}, $${base + 3}, $${base + 4})`;
+      })
+      .join(", ");
+
+    const q2 = `
+      INSERT INTO order_items (order_id, item_name, price, quantity)
+      VALUES ${placeholders}
+    `;
+    await client.query(q2, values);
+
+    await client.query("COMMIT");
+    return res.json({ message: "Order created successfully", orderId });
+  } catch (err) {
+    await client.query("ROLLBACK");
+    return res.status(500).json({ message: "DB error", error: err.message });
+  } finally {
+    client.release();
+  }
 });
 
 // =======================
 // GET ALL ORDERS
 // =======================
-app.get("/orders", (req, res) => {
+app.get("/orders", async (req, res) => {
   const q1 = `
     SELECT o.id, o.status, o.total, o.created_at,
            u.email AS customer
@@ -73,51 +112,70 @@ app.get("/orders", (req, res) => {
     ORDER BY o.created_at DESC
   `;
 
-  db.query(q1, (err, orders) => {
-    if (err) return res.status(500).json(err);
+  try {
+    const { rows: orders } = await db.query(q1);
+    if (orders.length === 0) return res.json([]);
 
-    const orderIds = orders.map(o => o.id);
-    if (orderIds.length === 0) return res.json([]);
+    const orderIds = orders.map((o) => o.id);
 
-    const q2 = "SELECT * FROM order_items WHERE order_id IN (?)";
-    db.query(q2, [orderIds], (err2, items) => {
-      if (err2) return res.status(500).json(err2);
+    const q2 = `
+      SELECT *
+      FROM order_items
+      WHERE order_id = ANY($1::int[])
+    `;
+    const { rows: items } = await db.query(q2, [orderIds]);
 
-      const result = orders.map(order => ({
-        ...order,
-        items: items.filter(i => i.order_id === order.id)
-      }));
+    const result = orders.map((order) => ({
+      ...order,
+      items: items.filter((i) => i.order_id === order.id),
+    }));
 
-      return res.json(result);
-    });
-  });
+    return res.json(result);
+  } catch (err) {
+    return res.status(500).json({ message: "DB error", error: err.message });
+  }
 });
 
 // =======================
 // UPDATE ORDER
 // =======================
-app.put("/orders/:id", (req, res) => {
+app.put("/orders/:id", async (req, res) => {
   const { status } = req.body;
   const { id } = req.params;
 
-  const q = "UPDATE orders SET status = ? WHERE id = ?";
-  db.query(q, [status, id], (err) => {
-    if (err) return res.status(500).json(err);
+  const q = "UPDATE orders SET status = $1 WHERE id = $2";
+
+  try {
+    await db.query(q, [status, id]);
     return res.json({ message: "Order updated" });
-  });
+  } catch (err) {
+    return res.status(500).json({ message: "DB error", error: err.message });
+  }
 });
 
 // =======================
 // DELETE ORDER
 // =======================
-app.delete("/orders/:id", (req, res) => {
+app.delete("/orders/:id", async (req, res) => {
   const { id } = req.params;
 
-  const q = "DELETE FROM orders WHERE id = ?";
-  db.query(q, [id], (err) => {
-    if (err) return res.status(500).json(err);
+  // If you don't have ON DELETE CASCADE on order_items.order_id,
+  // you should delete items first.
+  const client = await db.connect();
+
+  try {
+    await client.query("BEGIN");
+    await client.query("DELETE FROM order_items WHERE order_id = $1", [id]);
+    await client.query("DELETE FROM orders WHERE id = $1", [id]);
+    await client.query("COMMIT");
+
     return res.json({ message: "Order deleted" });
-  });
+  } catch (err) {
+    await client.query("ROLLBACK");
+    return res.status(500).json({ message: "DB error", error: err.message });
+  } finally {
+    client.release();
+  }
 });
 
 // =======================
