@@ -1,16 +1,18 @@
 import React, { useEffect, useState } from "react";
 
+const API = process.env.REACT_APP_API_URL;
+
 function Kitchen() {
   const [orders, setOrders] = useState([]);
 
   useEffect(() => {
-    fetch("http://localhost:5000/orders")
+    fetch(`${API}/orders`)
       .then(res => res.json())
       .then(data => setOrders(data));
   }, []);
 
   const updateOrderStatus = async (id, status) => {
-    await fetch(`http://localhost:5000/orders/${id}`, {
+    await fetch(`${API}/orders/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status }),
@@ -25,7 +27,7 @@ function Kitchen() {
   };
 
   const deleteOrder = async (id) => {
-    await fetch(`http://localhost:5000/orders/${id}`, {
+    await fetch(`${API}/orders/${id}`, {
       method: "DELETE",
     });
 
